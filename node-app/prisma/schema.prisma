@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model amazon_sales {
+  id           BigInt    @id @default(autoincrement())
+  asin         String    @db.VarChar(10)
+  product_name String
+  category     String?
+  units_sold   Int       @default(0)
+  revenue      Decimal   @default(0) @db.Decimal(10, 2)
+  sale_date    DateTime  @db.Date
+  metadata     Json?
+  tags         String[]
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model orders {
+  id         BigInt    @id @default(autoincrement())
+  user_id    BigInt
+  product_id BigInt
+  quantity   Int
+  total      Decimal   @db.Decimal(10, 2)
+  status     String?   @default("pending") @db.VarChar(20)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  products   products  @relation(fields: [product_id], references: [id], onUpdate: NoAction)
+  users      users     @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@index([created_at], map: "idx_orders_created_at")
+  @@index([product_id], map: "idx_orders_product_id")
+  @@index([status], map: "idx_orders_status")
+  @@index([user_id], map: "idx_orders_user_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model products {
+  id          BigInt    @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  price       Decimal   @db.Decimal(10, 2)
+  stock       Int       @default(0)
+  description String?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  orders      orders[]
+}
+
+model users {
+  id            BigInt    @id @default(autoincrement())
+  username      String    @unique @db.VarChar(50)
+  email         String    @unique @db.VarChar(100)
+  password_hash String    @db.VarChar(255)
+  age           Int?
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+  orders        orders[]
+}

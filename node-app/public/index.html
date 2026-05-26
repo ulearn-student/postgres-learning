@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>职位看板 · Amazon 运营</title>
+<link href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5.0.0/index.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css" rel="stylesheet">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #0a0a0a;
+    --bg-elevated: #141414;
+    --bg-hover: #1f1f1f;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.16);
+    --text: #fafafa;
+    --text-muted: #888;
+    --text-dim: #555;
+    --accent: #00ff88;
+    --warning: #ffaa00;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+    min-height: 100vh;
+    line-height: 1.5;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 48px 40px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 64px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+}
+
+.logo {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.logo-mark {
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+}
+
+.logo-text {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.logo-sub {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-left: 8px;
+}
+
+.header-meta {
+    text-align: right;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.header-meta-time {
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 4px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* 数据卡片 */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 48px;
+}
+
+.stat {
+    background: var(--bg);
+    padding: 32px;
+    transition: background 0.2s;
+}
+
+.stat:hover {
+    background: var(--bg-elevated);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+}
+
+.stat-value {
+    font-size: 48px;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-unit {
+    font-size: 16px;
+    color: var(--text-muted);
+    margin-left: 4px;
+    font-weight: 400;
+}
+
+.stat-bar {
+    margin-top: 16px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    transform-origin: left;
+    animation: barGrow 1s ease-out forwards;
+}
+
+@keyframes barGrow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+
+/* 筛选 */
+.filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 280px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 15px;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg);
+}
+
+.search-input::placeholder {
+    color: var(--text-dim);
+}
+
+.filter-select {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    min-width: 140px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%23888' stroke-width='1.5'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+}
+
+.filter-select:hover {
+    border-color: var(--border-hover);
+}
+
+/* 标题 */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.section-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* 职位卡片 */
+.jobs-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.job-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.job-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+    transform-origin: top;
+}
+
+.job-card:hover {
+    border-color: var(--border-hover);
+    background: var(--bg-hover);
+    transform: translateX(4px);
+}
+
+.job-card:hover::before {
+    transform: scaleY(1);
+}
+
+.job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    gap: 24px;
+}
+
+.job-title-wrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.job-title {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+}
+
+.job-company {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.job-salary {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--accent);
+    white-space: nowrap;
+}
+
+.job-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+.job-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.job-meta-item::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: var(--text-dim);
+    border-radius: 50%;
+}
+
+.job-meta-item:first-child::before {
+    display: none;
+}
+
+.job-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.job-tag {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+/* 空状态 */
+.empty {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.loading::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin-right: 12px;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@media (max-width: 900px) {
+    .container { padding: 32px 24px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .header { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .header-meta { text-align: left; }
+    .stat-value { font-size: 36px; }
+    .job-header { flex-direction: column; }
+    .job-salary { font-size: 18px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    
+    <header class="header">
+        <div class="logo">
+            <div class="logo-mark"></div>
+            <span class="logo-text">职位看板</span>
+            <span class="logo-sub">// 亚马逊运营</span>
+        </div>
+        <div class="header-meta">
+            <div class="header-meta-time" id="currentTime"></div>
+            <div>实时数据 · v1.0</div>
+        </div>
+    </header>
+    
+    <section class="stats">
+        <div class="stat">
+            <div class="stat-label">职位总数</div>
+            <div class="stat-value" id="statTotal">—</div>
+            <div class="stat-bar"><div class="stat-bar-fill"></div></div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">覆盖城市</div>
+            <div class="stat-value" id="statCities">—</div>
+            <div class="stat-bar"><div class="stat-bar-fill"></div></div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">平均月薪</div>
+            <div class="stat-value"><span id="statAvg">—</span><span class="stat-unit">k</span></div>
+            <div class="stat-bar"><div class="stat-bar-fill"></div></div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">最高月薪</div>
+            <div class="stat-value"><span id="statMax">—</span><span class="stat-unit">k</span></div>
+            <div class="stat-bar"><div class="stat-bar-fill"></div></div>
+        </div>
+    </section>
+    
+    <div class="filters">
+        <input 
+            type="text" 
+            class="search-input" 
+            id="searchInput" 
+            placeholder="搜索职位、公司、关键词..."
+        >
+        <select class="filter-select" id="cityFilter">
+            <option value="">全部城市</option>
+        </select>
+        <select class="filter-select" id="salaryFilter">
+            <option value="0">薪资不限</option>
+            <option value="5">5k 以上</option>
+            <option value="10">10k 以上</option>
+            <option value="15">15k 以上</option>
+            <option value="20">20k 以上</option>
+        </select>
+        <select class="filter-select" id="sortFilter">
+            <option value="created_at">最新发布</option>
+            <option value="salary_max">薪资最高</option>
+            <option value="salary_min">薪资最低</option>
+        </select>
+    </div>
+    
+    <section>
+        <div class="section-header">
+            <h2 class="section-title">职位列表</h2>
+            <span class="section-count" id="jobCount">—</span>
+        </div>
+        <div class="jobs-grid" id="jobsContainer">
+            <div class="loading">正在加载职位...</div>
+        </div>
+    </section>
+</div>
+
+<script>
+let currentFilters = {
+    search: '',
+    city: '',
+    minSalary: 0,
+    sortBy: 'created_at'
+};
+
+function formatTime() {
+    const now = new Date();
+    const opts = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    document.getElementById('currentTime').textContent = now.toLocaleTimeString('zh-CN', opts);
+}
+
+function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+async function loadStats() {
+    try {
+        const res = await fetch('/api/jobs/stats');
+        const data = await res.json();
+        document.getElementById('statTotal').textContent = data.total;
+        document.getElementById('statCities').textContent = data.cityCount;
+        document.getElementById('statAvg').textContent = data.avgSalaryMax || 0;
+        document.getElementById('statMax').textContent = data.maxSalary || 0;
+    } catch (e) {
+        console.error('统计加载失败:', e);
+    }
+}
+
+async function loadCities() {
+    try {
+        const res = await fetch('/api/jobs/cities');
+        const cities = await res.json();
+        const select = document.getElementById('cityFilter');
+        cities.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('城市加载失败:', e);
+    }
+}
+
+async function loadJobs() {
+    const container = document.getElementById('jobsContainer');
+    container.innerHTML = '<div class="loading">正在加载职位...</div>';
+    
+    try {
+        const params = new URLSearchParams({
+            search: currentFilters.search,
+            city: currentFilters.city,
+            minSalary: currentFilters.minSalary,
+            sortBy: currentFilters.sortBy,
+            pageSize: 50
+        });
+        
+        const res = await fetch(`/api/jobs?${params}`);
+        const result = await res.json();
+        
+        document.getElementById('jobCount').textContent = `共 ${result.pagination.total} 个职位 · 显示 ${result.data.length} 个`;
+        
+        if (result.data.length === 0) {
+            container.innerHTML = '<div class="empty">没有符合条件的职位</div>';
+            return;
+        }
+        
+        container.innerHTML = result.data.map(job => renderJob(job)).join('');
+        
+    } catch (e) {
+        console.error('职位加载失败:', e);
+        container.innerHTML = '<div class="empty">加载失败，请检查网络连接</div>';
+    }
+}
+
+function renderJob(job) {
+    const tags = (job.tags || []).slice(0, 6).map(t => 
+        `<span class="job-tag">${escapeHtml(t)}</span>`
+    ).join('');
+    
+    const meta = [
+        job.city && job.district ? `${escapeHtml(job.city)} · ${escapeHtml(job.district)}` : escapeHtml(job.city || ''),
+        escapeHtml(job.experience || ''),
+        escapeHtml(job.education || ''),
+        escapeHtml(job.company_size || '')
+    ].filter(Boolean).map(item => 
+        `<span class="job-meta-item">${item}</span>`
+    ).join('');
+    
+    return `
+        <article class="job-card" onclick="openJob('${escapeHtml(job.url)}')">
+            <div class="job-header">
+                <div class="job-title-wrap">
+                    <div class="job-title">${escapeHtml(job.title)}</div>
+                    <div class="job-company">${escapeHtml(job.company)}</div>
+                </div>
+                <div class="job-salary">${escapeHtml(job.salary_text || '—')}</div>
+            </div>
+            <div class="job-meta">${meta}</div>
+            ${tags ? `<div class="job-tags">${tags}</div>` : ''}
+        </article>
+    `;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function openJob(url) {
+    if (url) window.open(url, '_blank');
+}
+
+document.getElementById('searchInput').addEventListener('input', debounce(e => {
+    currentFilters.search = e.target.value;
+    loadJobs();
+}, 300));
+
+document.getElementById('cityFilter').addEventListener('change', e => {
+    currentFilters.city = e.target.value;
+    loadJobs();
+});
+
+document.getElementById('salaryFilter').addEventListener('change', e => {
+    currentFilters.minSalary = parseInt(e.target.value);
+    loadJobs();
+});
+
+document.getElementById('sortFilter').addEventListener('change', e => {
+    currentFilters.sortBy = e.target.value;
+    loadJobs();
+});
+
+formatTime();
+setInterval(formatTime, 1000);
+
+loadStats();
+loadCities();
+loadJobs();
+</script>
+</body>
+</html>

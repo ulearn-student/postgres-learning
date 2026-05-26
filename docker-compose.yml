@@ -1,0 +1,105 @@
+# docker-compose.yml
+# 这是 Docker Compose 的配置文件,用 YAML 格式
+# 一个文件就能管理多个容器(服务),启动停止都是一条命令
+
+# Compose 文件版本(3.8 兼容性最好)
+version: '3.8'
+
+# services: 定义所有要启动的容器服务
+services:
+
+  # ============ 服务 1:PostgreSQL 数据库 ============
+  postgres:
+    # image: 使用的 Docker 镜像
+    # postgres:16-alpine 是体积最小的版本(约 80MB,普通版 400MB+)
+    image: postgres:16-alpine
+
+    # container_name: 容器的名字(后续操作都用这个名字)
+    container_name: my-postgres
+
+    # restart: 重启策略
+    # always = 容器挂了/电脑重启后自动启动(开发环境必备)
+    restart: always
+
+    # environment: 环境变量(配置数据库参数)
+    environment:
+      POSTGRES_USER: postgres # 数据库超级用户名
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: shop_db # 启动时自动创建的数据库名
+
+      # 设置时区和字符编码(很重要!避免中文乱码)
+      TZ: Asia/Shanghai # 时区:上海
+      LANG: en_US.utf8 # 字符集
+
+      # PostgreSQL 数据存储位置(容器内部路径)
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+    # ports: 端口映射 "主机端口:容器端口"
+    # 这样在 Windows 上用 localhost:5432 就能访问到容器里的数据库
+    ports:
+      - "5433:5432"
+
+    # volumes: 数据持久化
+    # 关键!不配置的话,容器删除数据就全没了
+    volumes:
+      # pg_data 是命名卷,Docker 自动管理(推荐方式)
+      - pg_data:/var/lib/postgresql/data
+
+      # 把本地的 init-scripts 文件夹映射到容器内
+      # 这个目录里的 .sql 文件会在数据库【首次启动时】自动执行
+      - ./init-scripts:/docker-entrypoint-initdb.d
+
+      # 把本地的 backups 文件夹映射到容器内,用于备份/恢复
+      - ./backups:/backups
+
+    # healthcheck: 健康检查(让 Docker 知道数据库是否真的启动好了)
+    healthcheck:
+      # pg_isready: PostgreSQL 自带的健康检查命令
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d shop_db" ]
+      interval: 10s # 每 10 秒检查一次
+      timeout: 5s # 超过 5 秒没响应就算失败
+      retries: 5 # 失败 5 次才算真的挂了
+      start_period: 30s # 启动后 30 秒内的失败不算数(给数据库启动时间)
+
+    # networks: 加入自定义网络(方便服务间通信)
+    networks:
+      - app-network
+
+  # ============ 服务 2:pgAdmin(可视化管理工具)============
+  # 类似 Navicat,用浏览器就能管理数据库
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: my-pgadmin
+    restart: always
+    environment:
+      # pgAdmin 登录账号
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      # 关闭一些不必要的安全检查(本地开发用)
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      # 用 5050 端口访问 pgAdmin(避免和其他服务冲突)
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - app-network
+    # depends_on: 依赖关系,确保 postgres 先启动
+    depends_on:
+      postgres:
+        condition: service_healthy # 等 postgres 健康检查通过后才启动
+
+# ============ 命名卷(数据持久化的存储位置)============
+volumes:
+  pg_data:
+    # PostgreSQL 的数据
+    driver: local
+  pgadmin_data:
+    # pgAdmin 的配置
+    driver: local
+
+# ============ 自定义网络 ============
+networks:
+  app-network:
+    driver: bridge

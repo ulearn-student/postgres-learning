@@ -1,0 +1,16 @@
+﻿# 环境变量
+node-app/.env
+node-app/.env.local
+
+# Node 依赖
+node-app/node_modules/
+
+# 数据库备份
+backups/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
